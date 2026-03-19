@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lua Obfuscator – Mejorado</title>
+  <style>
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 { color: #facc15; }
+    textarea {
+      width: 100%;
+      height: 250px;
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #facc15;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover { background: #eab308; }
+    select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      margin-top: 10px;
+    }
+    #status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Lua Obfuscator (API Mejorada)</h1>
+  <p>Pega tu script Lua y elige un nivel de protección.</p>
+
+  <h3>Entrada</h3>
+  <textarea id="input" placeholder="print('Hola mundo')"></textarea>
+
+  <br>
+  <label>Nivel de protección:</label>
+  <br>
+  <select id="preset">
+    <option value="basic">Básico</option>
+    <option value="medium">Medio</option>
+    <option value="strong">Fuerte</option>
+  </select>
+
+  <br>
+  <button onclick="obfuscate()">Ofuscar</button>
+
+  <div id="status"></div>
+
+  <h3>Salida</h3>
+  <textarea id="output" readonly placeholder="Aquí aparecerá el código ofuscado..."></textarea>
+
+  <button onclick="copyOutput()">Copiar</button>
+
+  <script>
+    function getSettings(level) {
+      if (level === "basic") {
+        return {
+          Encryption: false,
+          RenameVariables: true,
+          RemoveComments: true
+        };
+      }
+      if (level === "medium") {
+        return {
+          Encryption: true,
+          RenameVariables: true,
+          RenameGlobals: true,
+          RemoveComments: true
+        };
+      }
+      if (level === "strong") {
+        return {
+          Encryption: true,
+          RenameVariables: true,
+          RenameGlobals: true,
+          RemoveComments: true,
+          AntiTamper: true,
+          AntiDebug: true
+        };
+      }
+    }
+
+    async function obfuscate() {
+      const code = document.getElementById("input").value.trim();
+      const preset = document.getElementById("preset").value;
+      const output = document.getElementById("output");
+      const status = document.getElementById("status");
+
+      if (!code) {
+        status.textContent = "No hay código para ofuscar.";
+        return;
+      }
+
+      status.textContent = "Ofuscando...";
+      output.value = "";
+
+      try {
+        const res = await fetch("https://luaobfuscator.com/api/obfuscate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            script: code,
+            settings: getSettings(preset)
+          })
+        });
+
+        const data = await res.json();
+
+        if (data && data.obfuscated) {
+          output.value = data.obfuscated;
+          status.textContent = "Listo ✔";
+        } else {
+          output.value = "";
+          status.textContent = "Error: no se recibió código ofuscado.";
+        }
+
+      } catch (err) {
+        status.textContent = "Error al conectar con LuaObfuscator.";
+      }
+    }
+
+    function copyOutput() {
+      const text = document.getElementById("output").value;
+      if (!text) return;
+
+      navigator.clipboard.writeText(text);
+      document.getElementById("status").textContent = "Copiado ✔";
+      setTimeout(() => {
+        document.getElementById("status").textContent = "";
+      }, 1500);
+    }
+  </script>
+
+</body>
+</html>
